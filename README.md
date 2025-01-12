@@ -1,8 +1,6 @@
 
 # AgroMercantil Produtos - Avaliação Técnica
 
-Pictures
-
 ## Introdução
 
 Projeto desenvolvido para avaliação técnica. É uma plataforma que exibe uma tabela de produtos, que podem ser editados ou excluídos. Também é possível adicionar novos produtos. As principas tecnologias utilizadas foram ReactJS para o frontend e Django Rest Framework para o backend.
@@ -28,12 +26,54 @@ Crie uma aplicação em React que consuma uma API REST fictícia e exiba uma lis
 responde no seguinte formato: 
 `GET /api/products [ { id : 1, name : Produto 1", price : 100.0 }, { id : 2, name : Produto 2", price : 200.0 } ]`
 
-Tarefas:
+**Tarefas:**
 - Exiba os produtos em uma tabela, com colunas para Nome, Preço e Ações
 - Implemente uma funcionalidade para excluir produtos da lista
 - Adicione um botão para adicionar novos produtos (não é necessário conectar com a API)
 - Use hooks (useState, useEffect) para gerenciar o estado da aplicação.
 
+**Conclusão:**
+![amhome](https://github.com/user-attachments/assets/018248fb-f2ad-4626-9ea2-02aa04a8f420)
+![amnewproduct](https://github.com/user-attachments/assets/a9c75af9-65af-4ef2-ad4c-bc5523299db7)
+![ameditproduct](https://github.com/user-attachments/assets/16a6556c-a166-422d-992d-8b88aec97410)
+![amremoveproduct](https://github.com/user-attachments/assets/168036ef-a64e-4ab8-b774-f1cb282e45f4)
+
+Na parte inicial, o **useState** foi usado para armazenar estados da aplicação e o **useEffect** para gerenciá-los conforme necessário. Os itens foram divididos nos seguintes componentes:
+- ProductsTable.tsx
+- CreateProductForm.tsx
+- RemoveProductForm.tsx
+- EditProductForm.tsx
+
+O Hook useState foi usado em `CreateProductForm.tsx` para guardar valores do formulário, assim como no `EditProductForm.tsx`:
+```.tsx
+const CreateProductForm: React.FC<CreateProductFormProps> = ({
+  onProductCreated,
+}) => {
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState<number | string>("");
+...
+```
+
+O Hook useEffect foi usado para inicializar e reinicializar o state de `products` quando houvessem alterações nos produtos da `Home.tsx`. Posteriormente, modificado para se adequar à conexão com a API:
+```.tsx
+function Home() {
+  const [products, setProducts] = useState([]);
+  const { createProductModalOpen, editProductModalOpen, removeProductModalOpen } =
+  useSelector((state: RootState) => state.modal);
+  const dispatch: AppDispatch = useDispatch();
+
+  useEffect(() => {
+    getProducts();
+  }, []);
+
+  const getProducts = async () => {
+    api
+      .get("/products/")
+      .then((response) => response.data)
+      .then((data) => setProducts(data))
+      .catch((error) => alert(error));
+  };
+```
 
 ### Tarefa 2 - Integração Front-End e Back-End
 
@@ -42,13 +82,137 @@ Implemente uma API em Django que atenda ao front end da questão anterior. A API
 - Permitir a exclusão de um produto
 - Permitir a adição de um novo produto.
 
-Tarefas:
+**Tarefas:**
 
 - Crie o modelo Product no Django com campos name e price
 - Implemente as rotas da API usando o Django REST Framework (DRF)
 - Adicione validações para impedir que produtos sem nome ou preço sejam criados
 - Escreva testes para garantir o funcionamento correto da API.
 
+**Conclusão:**
+
+Estrutura de pastas do backend:<br><br>
+|-> backend<br>
+|   |-> backend  (configurações gerais)<br>
+|   |-> product  (configurações de produtos)<br>
+|   |-> user  (configurações de usuários)<br>
+
+
+Criação do **Product model** no Django em backend>product>models.py:
+```python
+class Product(models.Model):
+  name = models.CharField(max_length=100)
+  price = models.FloatField()
+  
+  def __str__(self):
+    return self.name
+```
+Serializer de Product para **garantir que ele não seja criado sem name ou price**:
+```python
+class ProductSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Product
+    fields = ["id", "name", "price"]
+    extra_kwargs = {"price": {"required": True},
+                    "name": {"required": True}}
+    
+  def update(self, instance, validated_data):
+    instance.name = validated_data.get("name", instance.name)
+    instance.price = validated_data.get("price", instance.price)
+    instance.save()
+    return instance
+```
+**Configuração de urls** em backend>product>urls.py:
+```python
+urlpatterns = [
+  path('', views.ListProductView.as_view(), name ="product-list"),
+  path('<int:pk>/', views.GetProductView.as_view(), name ="product-get"),
+  path('create/', views.CreateProductView.as_view(), name ="product-create"),
+  path('update/<int:pk>/', views.UpdateProductView.as_view(), name ="product-update"),
+  path('delete/<int:pk>/', views.DeleteProductView.as_view(), name ="product-delete"),
+]
+```
+**Configuração das urls gerais** em backend>backend>urls.py:
+```python
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/products/', include('product.urls')),
+    path('api/user/', include('user.urls')),
+]
+```
+**Testes unitários** sobre o Product model:
+```python
+from django.test import TestCase
+from django.core.exceptions import ValidationError
+from ..models import Product
+
+class ProductTestCase(TestCase):
+  
+  # Cria produto
+  def setUp(self):
+    self.product = Product.objects.create(name="Produto1", price=25.99)
+  
+  # Testa se o produto é criado corretamente
+  def test_product_creation(self):
+    product = self.product
+    self.assertEqual(product.name, "Produto1")
+    self.assertEqual(product.price, 25.99)
+  
+  # Testa se name é obrigatório
+  def test_product_name_required(self):
+    product = Product(name="", price=10.00)
+    with self.assertRaises(ValidationError):
+      product.full_clean()
+  
+  # Testa se price é obrigatório
+  def test_product_price_required(self):
+    product = Product(name="Produto1", price=None)
+    with self.assertRaises(ValidationError):
+      product.full_clean()
+```
+**Testes unitários** sobre a view do Product:
+```python
+class ProductViewTests(APITestCase):
+
+    def setUp(self):
+        # Cria o usuário e gera o token
+        self.user = User.objects.create_user(username="testuser", password="testpassword")
+        token = AccessToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(token)}")
+        self.product = Product.objects.create(name="Produto", price=25.99)
+
+    # Testa get de produtos
+    def test_list_products(self):
+        url = reverse("product-list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        
+    # Testa criação de produtos
+    def test_create_product(self):
+        url = reverse("product-create")
+        data = {"name": "Novo produto", "price": 19.99}
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Product.objects.count(), 2)
+    
+    # Testa update de produtos
+    def test_update_product(self):
+        url = reverse("product-update", args=[self.product.pk])
+        data = {"name": "Produto Atualizado", "price": 29.99}
+        response = self.client.put(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.name, "Produto Atualizado")
+        self.assertEqual(self.product.price, 29.99)
+
+    # Testa delete de produtos
+    def test_delete_product(self):
+        url = reverse("product-delete", args=[self.product.pk])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Product.objects.count(), 0)
+```
 ### Tarefa 3 - Teste de Componentes em React
 
 Escreva testes unitários para os componentes da aplicação React criada na Questão 1.
@@ -67,6 +231,76 @@ Tarefas:
 - Configure o Django REST Framework para usar JWT na autenticação.
 - Modifique as rotas para que apenas usuários autenticados possam acessar ou modificar os produtos.
 - Crie um endpoint para login, que retorne um token JWT válido.
+
+**Conclusão:** <br>
+Criei um módulo `user` na API. Ele é responsável pela autenticação e autorização do projeto, que utiliza o JWTokens. O Model de usuário é o User do auth.models. O arquivo `serializer.py` valida a criação de usuários sem nome ou senha.
+```python
+from rest_framework import serializers
+from django.contrib.auth.models import User
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "password"]
+        extra_kwargs = {
+            "password": {"write_only": True, "required": True},
+            "name": {"required": True},
+        }
+
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
+```
+No arquivo de view, temos a classe `CreateUserView`:
+```python
+class CreateUserView(generics.CreateAPIView):
+  queryset = User.objects.all()
+  serializer_class = UserSerializer
+  permission_classes = [AllowAny]
+
+  def create(self, request):
+    serializer = UserSerializer(data = request.data)
+    if serializer.is_valid():
+      serializer.save()
+      return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+```
+Na parte de `urls.py`, usamos alguns métodos do rest_framework_simplejwt.view para gerar token (TokenObtainPairView) para login e refresh (TokenRefreshView):
+```python
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+urlpatterns = [
+  path('create/', CreateUserView.as_view(), name ="create_user"),
+  path('login/', TokenObtainPairView.as_view(), name='get_token'),
+  path('token/refresh/', TokenRefreshView.as_view(), name='refresh_token'),
+  path("auth/", include("rest_framework.urls")),
+]
+```
+As rotas de produtos precisam de autenticação. Como cada rota implementa uma classe de `view.py`, a permissão foi incluída da seguinte forma:
+```python
+class GetProductView(generics.RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticated]
+...
+class ListProductView(generics.ListAPIView):
+    serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticated]
+...
+class CreateProductView(generics.CreateAPIView):
+  serializer_class = ProductSerializer
+  permission_classes = [IsAuthenticated]
+...
+class UpdateProductView(generics.UpdateAPIView):
+  serializer_class = ProductSerializer
+  permission_classes = [IsAuthenticated]
+...
+class DeleteProductView(generics.DestroyAPIView):
+  serializer_class = ProductSerializer
+  permission_classes = [IsAuthenticated]
+...
+```
+
 
 ### Tarefa 5 - Estilização Responsiva
 
