@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../api.ts";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants.ts";
 import React from "react";
+import LoadingIndicator from "./LoadingIndicator.tsx";
 
 interface AuthFormProps {
   route: string;
@@ -38,24 +39,30 @@ const AuthForm: React.FC<AuthFormProps> = ({ route, method }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 items-center justify-center m-[50px auto] p-5 rounded-md shadow-md m-w-[400px]">
-      <h1 className="bg-black">{name}</h1>
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-4 items-center justify-center max-w-[400px] mx-auto p-6 bg-white rounded-lg shadow-lg"
+    >
+      <h1 className="text-2xl font-bold mb-6">{name}</h1>
       <input
         type="text"
-        className="form-input"
+        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         placeholder="Username"
       />
       <input
         type="password"
-        className="form-input"
+        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         placeholder="Password"
       />
-      {loading && <div>Loading...</div>}
-      <button className="form-button" type="submit">
+      {loading && <LoadingIndicator />}
+      <button
+        className="w-full py-2 mt-4 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary"
+        type="submit"
+      >
         {name}
       </button>
     </form>

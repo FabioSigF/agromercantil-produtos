@@ -79,7 +79,7 @@ const EditProductForm: React.FC<EditProductFormProps> = ({
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           placeholder="Nome do produto"
         />
       </div>
@@ -89,13 +89,13 @@ const EditProductForm: React.FC<EditProductFormProps> = ({
           type="number"
           value={price}
           onChange={(e) => setPrice(Number(e.target.value))}
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           placeholder="Preço do produto"
         />
       </div>
       <button
         type="submit"
-        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-green-700"
+        className="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary-dark transition"
       >
         Editar Produto
       </button>
