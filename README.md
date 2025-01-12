@@ -307,8 +307,98 @@ class DeleteProductView(generics.DestroyAPIView):
 Adicione estilos à aplicação React para torná-la responsiva.
 Tarefas:
 
-- Utilize CSS ou uma biblioteca como TailwindCSS ou BootstrapP
+- Utilize CSS ou uma biblioteca como TailwindCSS ou Bootstrap
 - Certifique se de que a tabela seja exibida corretamente em diferentes tamanhos de tela (desktop, tablet, celular).
+
+**Conclusão:** <br>
+A biblioteca escolhida foi o Tailwind. Todos os componentes foram construídos para se adaptarem aos vários tamanhos de tela, sendo necessário alterações específicas apenas na ProductsTable:
+```.tsx
+import React from "react";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "../redux/store";
+import {
+  openCreateProductModal,
+  openEditProductModal,
+  openRemoveProductModal,
+} from "../redux/modal/slice";
+
+// React Window - Performance optimization
+import { FixedSizeList} from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
+
+const ProductsTable = ({ products }) => {
+  ...
+const renderRow = ({ index, style }) => {
+    const product = products[index];
+    return (
+      <div
+        style={style}
+        className="flex flex-row items-center justify-between border px-4 py-2 min-w-full"
+      >
+        <div className="w-full sm:w-1/3 py-1 text-left break-words">
+          {product.name}
+        </div>
+        <div className="w-full sm:w-1/3 py-1 text-left">
+          R$ {product.price.toFixed(2)}
+        </div>
+        <div className="w-full sm:w-1/3 flex gap-2 justify-center">
+          <button
+            onClick={() => handleEdit(product.id)}
+            className="mb-2 sm:mb-0 px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
+          >
+            Editar
+          </button>
+          <button
+            onClick={() => handleRemove(product.id)}
+            className="mb-2 sm:mb-0 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
+          >
+            Remover
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="p-8">
+      <h1 className="text-2xl font-bold mb-6">
+        Lista de Produtos - Commodities Agrícolas
+      </h1>
+      <button
+        onClick={handleAddProduct}
+        className="mb-4 px-4 py-2 bg-primary text-white rounded shadow hover:bg-primary-dark green transition"
+      >
+        Adicionar Produto
+      </button>
+      <div className="overflow-x-auto">
+        <div className="min-w-[540px] border border-gray-300 rounded-lg">
+          <div className="bg-gray-100 flex">
+            <div className="w-1/3 border px-4 py-2 text-left">Nome</div>
+            <div className="w-1/3 border px-4 py-2 text-left">Preço</div>
+            <div className="w-1/3 border px-4 py-2 text-center">Ações</div>
+          </div>
+          <div className="w-full h-[50vh]">
+            <AutoSizer>
+              {({ height, width }) => (
+                <FixedSizeList
+                  height={height}
+                  itemCount={products.length}
+                  itemSize={56}
+                  width={width}
+                >
+                  {renderRow}
+                </FixedSizeList>
+              )}
+            </AutoSizer>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProductsTable;
+```
 
 ### Tarefa 6 - Gerenciamento de Estado Global
 
@@ -316,8 +406,87 @@ A aplicação React cresceu e agora precisa de um gerenciamento de estado mais e
 
 Tarefas:
 
-- Refaça a aplicação da Questão 1, utilizando Redux Toolkit para gerenciar o estado globalP
+- Refaça a aplicação da Questão 1, utilizando Redux Toolkit para gerenciar o estado global
 - Mantenha as funcionalidades de exibir, excluir e adicionar produtos.
+
+**Conclusão:** <br>
+O Redux Tollkit foi utilizado, principalmente, para gerenciamento de estados globais do `Modal` de criação, edição e remoção de produtos.
+
+```.tsx
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+
+interface ModalState {
+  createProductModalOpen: boolean;
+  editProductModalOpen: boolean;
+  editProductId: number | null;
+  removeProductModalOpen: boolean;
+  removeProductId: number | null;
+}
+
+const initialState: ModalState = {
+  createProductModalOpen: false,
+  editProductModalOpen: false,
+  editProductId: null,
+  removeProductModalOpen: false,
+  removeProductId: null
+};
+
+const modalSlice = createSlice({
+  name: "modal",
+  initialState,
+  reducers: {
+    openCreateProductModal(state) {
+      state.createProductModalOpen = true;
+    },
+    closeCreateProductModal(state) {
+      state.createProductModalOpen = false;
+    },
+    openEditProductModal(state, action: PayloadAction<number>) {
+      state.editProductModalOpen = true;
+      state.editProductId = action.payload;
+    },
+    closeEditProductModal(state) {
+      state.editProductModalOpen = false;
+      state.editProductId = null;
+    },
+    openRemoveProductModal(state, action: PayloadAction<number>) {
+      state.removeProductModalOpen = true;
+      state.removeProductId = action.payload;
+    },
+    closeRemoveProductModal(state) {
+      state.removeProductModalOpen = false;
+      state.removeProductId = null;
+    },
+  },
+});
+
+export const {
+  openCreateProductModal,
+  closeCreateProductModal,
+  openEditProductModal,
+  closeEditProductModal,
+  openRemoveProductModal,
+  closeRemoveProductModal
+} = modalSlice.actions;
+
+export default modalSlice.reducer;
+```
+Para organização, existe uma pasta `redux` em `src` que contem as configurações da store em `store.ts`:
+```.tsx
+import { configureStore } from "@reduxjs/toolkit";
+import modalReducer from "./modal/slice";
+
+export const store = configureStore({
+  reducer: {
+    modal: modalReducer,
+  },
+});
+
+export type AppDispatch = typeof store.dispatch;
+export type RootState = ReturnType<typeof store.getState>;
+```
+Na prática, o estado global vai guardar se o modal está aberto ou fechado, e qual será o seu conteúdo exibido. Em casos de editar ou remover produto, ele guarda o id do produto que é buscado no API quando o modal é aberto.
+
 
 ### Tarefa 7 - Implementação de Cache no Back-End
 
@@ -338,6 +507,38 @@ Tarefas:
 - Explique e implemente uma solução para melhorar a performance da renderização (ex.: virtualização de lista)
 - Utilize uma biblioteca como React-Window ou React-Virtualized.
 
+**Conclusão:** <br>
+O React-Window tem o papel de, basicamente, renderizar uma quantidade de itens na tabela Products para não gerar sobrecarga no sistema quando tem listas grandes.
+
+```.tsx
+// React Window - Performance optimization
+import { FixedSizeList} from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
+
+const ProductsTable = ({ products }) => {
+...
+          <div className="w-full h-[50vh]">
+            <AutoSizer>
+              {({ height, width }) => (
+                <FixedSizeList
+                  height={height}
+                  itemCount={products.length}
+                  itemSize={56}
+                  width={width}
+                >
+                  {renderRow}
+                </FixedSizeList>
+              )}
+            </AutoSizer>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+...
+```
+O AutoSizer serve para deixar o tamanho da FixedSizeList dinâmico. O FixedSizeList implementa uma lista de itens absolutos, exibindo em geral 9 itens por vez no HTML. Ou seja, se lista for maior que isso, ela os substitui conforme necessário.
 ### Tarefa 9 - Monitoramento e Logs
 Sua aplicação em Django precisa de um sistema de monitoramento e geração de logs para rastrear erros em produção.
 
