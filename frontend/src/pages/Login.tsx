@@ -5,6 +5,7 @@ function Login() {
   return (
     <div>
       <AuthForm route="user/login/" method="login" />
+      
     </div>
   )
 }

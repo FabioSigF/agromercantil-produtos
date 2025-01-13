@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
 import React from "react";
@@ -65,6 +65,21 @@ const AuthForm: React.FC<AuthFormProps> = ({ route, method }) => {
       >
         {name}
       </button>
+      {method === "login" ? (
+        <p className="pt-8">
+          Não possui uma conta?{" "}
+          <Link to="/register" className="font-bold text-primary">
+            Registre-se
+          </Link>
+        </p>
+      ) : (
+        <p className="pt-8">
+          Já possui uma conta?{" "}
+          <Link to="/login" className="font-bold text-primary">
+            Login
+          </Link>
+        </p>
+      )}
     </form>
   );
 };
