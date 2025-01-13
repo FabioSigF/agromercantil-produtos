@@ -23,7 +23,7 @@ class GetProductView(generics.RetrieveAPIView):
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticated]
 
-    @method_decorator(cache_page(60 * 10, key_prefix="product-detail", cache="default"))
+    @method_decorator(cache_page(1, key_prefix="product-detail", cache="default"))
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 

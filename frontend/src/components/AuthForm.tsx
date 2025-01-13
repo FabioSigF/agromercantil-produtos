@@ -1,9 +1,9 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api.ts";
-import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants.ts";
+import api from "../api";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
 import React from "react";
-import LoadingIndicator from "./LoadingIndicator.tsx";
+import LoadingIndicator from "./LoadingIndicator";
 
 interface AuthFormProps {
   route: string;

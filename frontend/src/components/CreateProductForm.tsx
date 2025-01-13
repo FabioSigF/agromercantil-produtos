@@ -1,19 +1,9 @@
 import React, { useState } from "react";
 import api from "../api";
-import { AppDispatch } from "../redux/store";
-import { useDispatch } from "react-redux";
-import { closeCreateProductModal } from "../redux/modal/slice";
 
-interface CreateProductFormProps {
-  onProductCreated: () => void;
-}
-
-const CreateProductForm: React.FC<CreateProductFormProps> = ({
-  onProductCreated,
-}) => {
+const CreateProductForm = () => {
   const [name, setName] = useState("");
   const [price, setPrice] = useState<number | string>("");
-  const dispatch: AppDispatch = useDispatch();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,11 +25,6 @@ const CreateProductForm: React.FC<CreateProductFormProps> = ({
       setName("");
       setPrice("");
 
-      // Atualiza produtos
-      onProductCreated();
-
-      // Fecha modal
-      dispatch(closeCreateProductModal());
     } catch (error) {
       console.error("Erro ao criar o produto:", error);
       alert("Erro ao criar o produto. Por favor, tente novamente.");
@@ -49,12 +34,13 @@ const CreateProductForm: React.FC<CreateProductFormProps> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white p-6 rounded-lg w-full max-w-md"
+      className="w-full flex flex-col gap-4 px-8"
     >
-      <h2 className="text-xl font-bold mb-4">Adicionar Novo Produto</h2>
+      <h2 className="font-bold mb-4 text-xl">Adicionar Novo Produto</h2>
       <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2">Nome</label>
+        <label htmlFor="name" className="block text-gray-700 font-medium mb-2">Nome</label>
         <input
+          id="name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -63,8 +49,9 @@ const CreateProductForm: React.FC<CreateProductFormProps> = ({
         />
       </div>
       <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2">Preço</label>
+        <label htmlFor="price" className="block text-gray-700 font-medium mb-2">Preço</label>
         <input
+          id="price"
           type="number"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
@@ -74,7 +61,7 @@ const CreateProductForm: React.FC<CreateProductFormProps> = ({
       </div>
       <button
         type="submit"
-        className="w-full bg-primary-dark text-white py-2 rounded-lg hover:bg-primary-dark"
+        className="bg-primary-dark text-white py-2 rounded-lg hover:bg-primary-dark"
       >
         Criar Produto
       </button>

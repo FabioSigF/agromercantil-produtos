@@ -6,28 +6,35 @@ import {
   openEditProductModal,
   openRemoveProductModal,
 } from "../redux/modal/slice";
-
+import { Product } from "../types/product";
 // React Window - Performance optimization
-import { FixedSizeList} from "react-window";
-import AutoSizer from "react-virtualized-auto-sizer";
+import { FixedSizeList } from "react-window";
+import api from "../api";
 
-const ProductsTable = ({ products }) => {
+const ProductsTable: React.FC<{ products: Product[] }> = ({ products }) => {
   const dispatch: AppDispatch = useDispatch();
-
-  const handleAddProduct = () => {
-    dispatch(openCreateProductModal());
-  };
 
   const handleEdit = (id: number) => {
     dispatch(openEditProductModal(id));
   };
 
-  const handleRemove = (id: number) => {
-    dispatch(openRemoveProductModal(id));
+  const handleRemove = async (id: number) => {
+    try {
+      await api.delete(`/products/delete/${id}/`);
+    } catch (error) {
+      console.error("Erro ao remover o produto:", error);
+      alert("Erro ao remover o produto. Por favor, tente novamente.");
+    }
   };
 
   // Renderiza cada linha da tabela
-  const renderRow = ({ index, style }) => {
+  const renderRow = ({
+    index,
+    style,
+  }: {
+    index: number;
+    style: React.CSSProperties;
+  }) => {
     const product = products[index];
     return (
       <div
@@ -49,6 +56,7 @@ const ProductsTable = ({ products }) => {
           </button>
           <button
             onClick={() => handleRemove(product.id)}
+            data-testid={`remove-button-${product.id}`}
             className="mb-2 sm:mb-0 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
           >
             Remover
@@ -60,35 +68,23 @@ const ProductsTable = ({ products }) => {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">
-        Lista de Produtos - Commodities Agrícolas
-      </h1>
-      <button
-        onClick={handleAddProduct}
-        className="mb-4 px-4 py-2 bg-primary text-white rounded shadow hover:bg-primary-dark green transition"
-      >
-        Adicionar Produto
-      </button>
-      <div className="overflow-x-auto">
+      <h1 className="text-xl font-bold mb-6">Lista de Produtos</h1>
+      <div className="overflow-x-hidden">
         <div className="min-w-[540px] border border-gray-300 rounded-lg">
           <div className="bg-gray-100 flex">
             <div className="w-1/3 border px-4 py-2 text-left">Nome</div>
             <div className="w-1/3 border px-4 py-2 text-left">Preço</div>
             <div className="w-1/3 border px-4 py-2 text-center">Ações</div>
           </div>
-          <div className="w-full h-[50vh]">
-            <AutoSizer>
-              {({ height, width }) => (
-                <FixedSizeList
-                  height={height}
-                  itemCount={products.length}
-                  itemSize={56}
-                  width={width}
-                >
-                  {renderRow}
-                </FixedSizeList>
-              )}
-            </AutoSizer>
+          <div className="w-full h-[50vh] overflow-hidden">
+            <FixedSizeList
+              height={400}
+              itemCount={products.length}
+              itemSize={56}
+              width="100%"
+            >
+              {renderRow}
+            </FixedSizeList>
           </div>
         </div>
       </div>

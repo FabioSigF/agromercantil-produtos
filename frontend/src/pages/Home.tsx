@@ -12,16 +12,16 @@ import EditProductForm from "../components/EditProductForm";
 import {
   closeCreateProductModal,
   closeEditProductModal,
-  closeRemoveProductModal
+  closeRemoveProductModal,
 } from "../redux/modal/slice";
 import { AppDispatch, RootState } from "../redux/store";
 import { useDispatch, useSelector } from "react-redux";
-import RemoveProductConfirm from "../components/RemoveProductConfirm";
 
 function Home() {
   const [products, setProducts] = useState([]);
-  const { createProductModalOpen, editProductModalOpen, removeProductModalOpen } =
-  useSelector((state: RootState) => state.modal);
+  const {
+    editProductModalOpen,
+  } = useSelector((state: RootState) => state.modal);
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
@@ -38,24 +38,17 @@ function Home() {
 
   return (
     <div>
+      <h1 className="text-2xl font-bold mb-6 p-8">
+        Commodities Agrícolas - AgroMercantil
+      </h1>
+      <CreateProductForm />
       <ProductsTable products={products} />
 
-      <Modal
-        isOpen={createProductModalOpen}
-        onClose={() => dispatch(closeCreateProductModal())}
-      >
-        <CreateProductForm onProductCreated={getProducts} />
-      </Modal>
       <Modal
         isOpen={editProductModalOpen}
         onClose={() => dispatch(closeEditProductModal())}
       >
         <EditProductForm onProductUpdated={getProducts} />
-      </Modal>
-      <Modal
-        isOpen={removeProductModalOpen}
-        onClose={() => dispatch(closeRemoveProductModal())} >
-          <RemoveProductConfirm onProductRemoved={getProducts}/>
       </Modal>
     </div>
   );

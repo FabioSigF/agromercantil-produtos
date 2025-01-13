@@ -1,11 +1,11 @@
 import { Navigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import api from "../api.ts";
-import { REFRESH_TOKEN, ACCESS_TOKEN } from "../constants.ts";
+import api from "../api";
+import { REFRESH_TOKEN, ACCESS_TOKEN } from "../constants";
 import { useEffect, useState } from "react";
 import React from "react";
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
