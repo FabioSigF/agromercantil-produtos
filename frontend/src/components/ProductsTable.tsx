@@ -1,9 +1,7 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../redux/store";
-import {
-  openEditProductModal,
-} from "../redux/modal/slice";
+import { openEditProductModal } from "../redux/modal/slice";
 import { Product } from "../types/product";
 // React Window - Performance optimization
 import { FixedSizeList } from "react-window";
@@ -67,22 +65,24 @@ const ProductsTable: React.FC<{ products: Product[] }> = ({ products }) => {
   return (
     <div className="p-8">
       <h1 className="text-xl font-bold mb-6">Lista de Produtos</h1>
-      <div className="overflow-x-hidden">
+      <div className="overflow-x-auto">
         <div className="min-w-[540px] border border-gray-300 rounded-lg">
           <div className="bg-gray-100 flex">
             <div className="w-1/3 border px-4 py-2 text-left">Nome</div>
             <div className="w-1/3 border px-4 py-2 text-left">Preço</div>
             <div className="w-1/3 border px-4 py-2 text-center">Ações</div>
           </div>
-          <div className="w-full h-[50vh] overflow-hidden">
-            <FixedSizeList
-              height={400}
-              itemCount={products.length}
-              itemSize={56}
-              width="100%"
-            >
-              {renderRow}
-            </FixedSizeList>
+          <div className="overflow-x-hidden">
+            <div className="w-full h-[50vh] overflow-y-hidden">
+              <FixedSizeList
+                height={400}
+                itemCount={products.length}
+                itemSize={56}
+                width="100%"
+              >
+                {renderRow}
+              </FixedSizeList>
+            </div>
           </div>
         </div>
       </div>

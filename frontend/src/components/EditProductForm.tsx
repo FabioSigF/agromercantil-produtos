@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Product } from "../types/product";
 import api from "../api";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../redux/store";
