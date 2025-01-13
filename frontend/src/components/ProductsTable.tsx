@@ -2,9 +2,7 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../redux/store";
 import {
-  openCreateProductModal,
   openEditProductModal,
-  openRemoveProductModal,
 } from "../redux/modal/slice";
 import { Product } from "../types/product";
 // React Window - Performance optimization

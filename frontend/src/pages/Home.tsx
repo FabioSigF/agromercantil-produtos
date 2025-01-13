@@ -10,9 +10,7 @@ import EditProductForm from "../components/EditProductForm";
 
 //Redux
 import {
-  closeCreateProductModal,
   closeEditProductModal,
-  closeRemoveProductModal,
 } from "../redux/modal/slice";
 import { AppDispatch, RootState } from "../redux/store";
 import { useDispatch, useSelector } from "react-redux";
