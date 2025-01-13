@@ -33,15 +33,12 @@ responde no seguinte formato:
 - Use hooks (useState, useEffect) para gerenciar o estado da aplicação.
 
 **Conclusão:**
-![amhome](https://github.com/user-attachments/assets/018248fb-f2ad-4626-9ea2-02aa04a8f420)
-![amnewproduct](https://github.com/user-attachments/assets/a9c75af9-65af-4ef2-ad4c-bc5523299db7)
-![ameditproduct](https://github.com/user-attachments/assets/16a6556c-a166-422d-992d-8b88aec97410)
-![amremoveproduct](https://github.com/user-attachments/assets/168036ef-a64e-4ab8-b774-f1cb282e45f4)
+![scrnli_NiCkHyqbCB6Yet](https://github.com/user-attachments/assets/fce69286-b571-455f-ad11-41b4e8b42553)
+![scrnli_irpUlCwSAB4LG5](https://github.com/user-attachments/assets/8d4667af-f828-4219-83c1-b3cd967050a0)
 
 Na parte inicial, o **useState** foi usado para armazenar estados da aplicação e o **useEffect** para gerenciá-los conforme necessário. Os itens foram divididos nos seguintes componentes:
 - ProductsTable.tsx
 - CreateProductForm.tsx
-- RemoveProductForm.tsx
 - EditProductForm.tsx
 
 O Hook useState foi usado em `CreateProductForm.tsx` para guardar valores do formulário, assim como no `EditProductForm.tsx`:
@@ -58,7 +55,7 @@ O Hook useEffect foi usado para inicializar e reinicializar o state de `products
 ```.tsx
 function Home() {
   const [products, setProducts] = useState([]);
-  const { createProductModalOpen, editProductModalOpen, removeProductModalOpen } =
+  const { editProductModalOpen } =
   useSelector((state: RootState) => state.modal);
   const dispatch: AppDispatch = useDispatch();
 
@@ -222,6 +219,125 @@ Tarefas:
 - O botão de excluir remove o produto da lista
 - Novos produtos podem ser adicionados corretamente.
 
+**Conclusão:** <br>
+Os testes requisitados ficaram divididos em dois arquivos. <br>
+ProductsTable.spec.tsx, testa a **Tabela de Produtos** e a **Remoção de Produtos**:
+```.tsx
+// Mock react-redux
+jest.mock("react-redux", () => ({
+  ...jest.requireActual("react-redux"),
+  useDispatch: jest.fn(),
+}));
+
+// Mock react-window
+jest.mock("react-window", () => ({
+  FixedSizeList: jest.fn(({ children, itemCount, itemSize, width, height }) => (
+    <div data-testid="FixedSizeList" style={{ width, height }}>
+      {Array.from({ length: itemCount }).map((_, index) => (
+        <div key={index} style={{ height: itemSize }}>
+          {children({ index, style: {} })}
+        </div>
+      ))}
+    </div>
+  )),
+}));
+
+describe("ProductsTable", () => {
+  const products = [
+    { id: 1, name: "Produto 1", price: 10.0 },
+    { id: 2, name: "Produto 2", price: 20.0 },
+  ];
+
+  let dispatch: jest.Mock;
+
+  beforeEach(() => {
+    dispatch = jest.fn();
+    (useDispatch as unknown as jest.Mock).mockReturnValue(dispatch);
+    
+    // Mocka delete api
+    jest.spyOn(api, "delete").mockResolvedValueOnce({});
+  });
+
+  it("deve renderizar a tabela e exibir os produtos corretamente", async () => {
+    render(<ProductsTable products={products} />);
+
+    await waitFor(() =>
+      expect(screen.getByText("Produto 1")).toBeInTheDocument()
+    );
+    await waitFor(() =>
+      expect(screen.getByText("R$ 10.00")).toBeInTheDocument()
+    );
+    await waitFor(() =>
+      expect(screen.getByText("Produto 2")).toBeInTheDocument()
+    );
+    await waitFor(() =>
+      expect(screen.getByText("R$ 20.00")).toBeInTheDocument()
+    );
+  });
+
+  it("deve remover um produto da lista ao clicar no botão de remover", async () => {
+
+    render(<ProductsTable products={products} />);
+
+    expect(screen.getByText("Produto 1")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("remove-button-1"));
+
+    await waitFor(() => {
+      expect(api.delete).toHaveBeenCalledWith("/products/delete/1/");
+    });
+
+    expect(screen.queryByText("Produto 1")).not.toBeInTheDocument();
+    expect(screen.getByText("Produto 2")).toBeInTheDocument();
+  });
+});
+```
+CreateProductForm.spec.tsx testa a **criação de produtos**:
+```.tsx
+jest.mock("../api");
+
+describe("CreateProductForm", () => {
+
+  it("não deve permitir a criação sem nome e preço", async () => {
+    render(<CreateProductForm />);
+
+    const submitButton = screen.getByRole("button", { name: /criar produto/i });
+
+    fireEvent.click(submitButton);
+
+    // Verifica se a API não foi chamada
+    expect(api.post).not.toHaveBeenCalled();
+  });
+
+  it("deve chamar a função de criação de produto com dados válidos", async () => {
+    const responseData = { data: { id: 1, name: "Produto Teste", price: 100 } };
+
+    (api.post as jest.Mock).mockResolvedValueOnce(responseData);
+
+    render(<CreateProductForm />);
+
+    // Preenche os campos
+    fireEvent.change(screen.getByLabelText(/nome/i), { target: { value: "Produto Teste" } });
+    fireEvent.change(screen.getByLabelText(/preço/i), { target: { value: "100" } });
+
+    const submitButton = screen.getByRole("button", { name: /criar produto/i });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      // Verifica se a API foi chamada com os dados corretos
+      expect(api.post).toHaveBeenCalledWith("products/create/", {
+        name: "Produto Teste",
+        price: 100,
+      });
+
+      // Verifica se os campos foram limpos
+      expect((screen.getByLabelText(/nome/i) as HTMLInputElement).value).toBe("");
+      expect((screen.getByLabelText(/preço/i) as HTMLInputElement).value).toBe("");
+    });
+  });
+
+});
+```
 
 ### Tarefa 4 - Autenticação e Autorização
 
@@ -410,37 +526,25 @@ Tarefas:
 - Mantenha as funcionalidades de exibir, excluir e adicionar produtos.
 
 **Conclusão:** <br>
-O Redux Tollkit foi utilizado, principalmente, para gerenciamento de estados globais do `Modal` de criação, edição e remoção de produtos.
+O Redux Tollkit foi utilizado, principalmente, para gerenciamento de estados globais do `Modal` de edição de produtos.
 
 ```.tsx
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface ModalState {
-  createProductModalOpen: boolean;
   editProductModalOpen: boolean;
   editProductId: number | null;
-  removeProductModalOpen: boolean;
-  removeProductId: number | null;
 }
 
 const initialState: ModalState = {
-  createProductModalOpen: false,
   editProductModalOpen: false,
   editProductId: null,
-  removeProductModalOpen: false,
-  removeProductId: null
 };
 
 const modalSlice = createSlice({
   name: "modal",
   initialState,
   reducers: {
-    openCreateProductModal(state) {
-      state.createProductModalOpen = true;
-    },
-    closeCreateProductModal(state) {
-      state.createProductModalOpen = false;
-    },
     openEditProductModal(state, action: PayloadAction<number>) {
       state.editProductModalOpen = true;
       state.editProductId = action.payload;
@@ -449,27 +553,16 @@ const modalSlice = createSlice({
       state.editProductModalOpen = false;
       state.editProductId = null;
     },
-    openRemoveProductModal(state, action: PayloadAction<number>) {
-      state.removeProductModalOpen = true;
-      state.removeProductId = action.payload;
-    },
-    closeRemoveProductModal(state) {
-      state.removeProductModalOpen = false;
-      state.removeProductId = null;
-    },
   },
 });
 
 export const {
-  openCreateProductModal,
-  closeCreateProductModal,
   openEditProductModal,
   closeEditProductModal,
-  openRemoveProductModal,
-  closeRemoveProductModal
 } = modalSlice.actions;
 
 export default modalSlice.reducer;
+
 ```
 Para organização, existe uma pasta `redux` em `src` que contem as configurações da store em `store.ts`:
 ```.tsx
@@ -485,8 +578,7 @@ export const store = configureStore({
 export type AppDispatch = typeof store.dispatch;
 export type RootState = ReturnType<typeof store.getState>;
 ```
-Na prática, o estado global vai guardar se o modal está aberto ou fechado, e qual será o seu conteúdo exibido. Em casos de editar ou remover produto, ele guarda o id do produto que é buscado no API quando o modal é aberto.
-
+Na prática, o estado global vai guardar se o modal está aberto ou fechado, e qual será o seu conteúdo exibido. Ele guarda o id do produto que é buscado no API quando o modal é aberto.
 
 ### Tarefa 7 - Implementação de Cache no Back-End
 
@@ -497,6 +589,76 @@ Tarefas:
 - Implemente caching para o endpoint, garantindo que os resultados sejam armazenados por 10
 minutosT
 - Explique como invalidar o cache se os produtos forem atualizados.
+
+**Conclusão:** <br>
+O Redis foi escolhido como banco em memória para armazenar o cache. A estratégia utilizada foi implementar o caching em `/api/products`, que faz a requisição da lista de produtos e, caso ocorra alguma atualização (POST, PUT ou DELETE) na lista, o cache seja invalidado e a lista atualizada novamente. Caso não ocorra
+nenhuma atualização, os dados requisitados estarão cacheados por 10 minutos.
+
+```python
+#Classe da rota /api/products
+class ListProductView(generics.ListAPIView):
+    serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticated]
+
+    @method_decorator(cache_page(60 * 10, key_prefix="product-list", cache="default"))
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        return Product.objects.all()
+```
+Função para invalidar cache:
+```python
+#product>cache_utils.py
+def invalidate_product_cache():
+    redis_conn = get_redis_connection("default")
+    prefix = "myapp"
+    detail_pattern = f"{prefix}:views.decorators.cache.cache*product-detail*"
+    list_pattern = f"{prefix}:views.decorators.cache.cache*product-list*"
+
+    keys_to_invalidate = list(redis_conn.scan_iter(detail_pattern)) + list(redis_conn.scan_iter(list_pattern))
+
+    if keys_to_invalidate:
+        redis_conn.delete(*keys_to_invalidate)
+        print(f"Chaves deletadas: {keys_to_invalidate}")
+    else:
+        print("Nenhuma chave encontrada para exclusão.")
+```
+Aplicação da função `invalidate_product_cache`:
+```python
+class CreateProductView(generics.CreateAPIView):
+    serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return Product.objects.all()
+    
+    def perform_create(self, serializer):
+        serializer.save()
+        invalidate_product_cache()
+
+class UpdateProductView(generics.UpdateAPIView):
+    serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return Product.objects.all()
+    
+    def perform_update(self, serializer):
+        serializer.save()
+        invalidate_product_cache()
+
+class DeleteProductView(generics.DestroyAPIView):
+    serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return Product.objects.all()
+    
+    def perform_destroy(self, instance):
+        instance.delete()
+        invalidate_product_cache()
+```
 
 ### Tarefa 8 - Otimização de Performance no Front-End
 
@@ -518,18 +680,14 @@ import AutoSizer from "react-virtualized-auto-sizer";
 const ProductsTable = ({ products }) => {
 ...
           <div className="w-full h-[50vh]">
-            <AutoSizer>
-              {({ height, width }) => (
-                <FixedSizeList
-                  height={height}
-                  itemCount={products.length}
-                  itemSize={56}
-                  width={width}
-                >
-                  {renderRow}
-                </FixedSizeList>
-              )}
-            </AutoSizer>
+            <FixedSizeList
+              height={400}
+              itemCount={products.length}
+              itemSize={56}
+              width="100%"
+            >
+              {renderRow}
+            </FixedSizeList>
           </div>
         </div>
       </div>
@@ -538,7 +696,7 @@ const ProductsTable = ({ products }) => {
 };
 ...
 ```
-O AutoSizer serve para deixar o tamanho da FixedSizeList dinâmico. O FixedSizeList implementa uma lista de itens absolutos, exibindo em geral 9 itens por vez no HTML. Ou seja, se lista for maior que isso, ela os substitui conforme necessário.
+O FixedSizeList implementa uma lista de itens absolutos, exibindo em geral 9 itens por vez no HTML. Ou seja, se lista for maior que isso, ela os substitui conforme necessário.
 ### Tarefa 9 - Monitoramento e Logs
 Sua aplicação em Django precisa de um sistema de monitoramento e geração de logs para rastrear erros em produção.
 
@@ -546,6 +704,51 @@ Tarefas:
 
 - Configure o Django para enviar logs detalhados para um sistema externo (ex.: Sentry ou ELK Stack)
 - Explique como monitorar falhas críticas e criar alertas para notificá-las.
+
+**Conclusão:** <br>
+Optei pela utilização do Sentry pela simplicidade de configuração. <br>
+Instalação:
+```bash
+pip install --upgrade 'sentry-sdk[django]'
+```
+Configuração em settings.py: 
+```python
+import sentry_sdk
+sentry_sdk.init(
+    dsn="https://df858272f91be469e6e326c8c91242b4@o4508636365914112.ingest.us.sentry.io/4508636367945728",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for tracing.
+    traces_sample_rate=1.0,
+    _experiments={
+        # Set continuous_profiling_auto_start to True
+        # to automatically start the profiler on when
+        # possible.
+        "continuous_profiling_auto_start": True,
+    },
+)
+```
+Para testar as configurações, usei o exemplo padrão do Sentry para forçar um erro de rotas e analisar os logs:
+```python
+#urls.py
+from django.contrib import admin
+from django.urls import path, include
+from django.urls import path
+
+def trigger_error(request):
+    division_by_zero = 1 / 0
+
+urlpatterns = [
+    path('sentry-debug/', trigger_error),
+    path('admin/', admin.site.urls),
+    path('api/products/', include('product.urls')),
+    path('api/user/', include('user.urls')),
+]
+```
+Erro na rota:
+![image](https://github.com/user-attachments/assets/aeecd2ae-b116-4759-b147-70990667772f)
+
+Erro detectado no dashboard do Sentry:
+![scrnli_FPOI3u9a91b91J](https://github.com/user-attachments/assets/4eee13bf-1c4c-41a2-9d55-10067455c60c)
 
 ### Tarefa 10 - Desafio Extra: Deploy em Produção
 Prepare o deploy da aplicação completa (front end e back-end).
