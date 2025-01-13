@@ -18,6 +18,36 @@ BackEnd:
 - Django Rest Framework: construção da API;
 - JWT: geração e validação de tokens de sessão do usuário;
 
+## Instalação
+
+Clone o repositório:
+
+```bash
+git clone https://github.com/FabioSigF/agromercantil-produtos
+```
+
+Na pasta do projeto:
+
+```cmd
+cd .\frontend\
+npm i
+npm run server
+```
+Abra um novo terminal para rodar o backend:
+```cmd
+cd .\backend\
+python manage.py runserver
+```
+
+Para que a aplicação funcione, é necessário ter instalado o Redis no seu computador para rodar o banco de dado em memória utilizado para armazenamento de cache.
+Para iniciá-lo:
+
+```cmd
+redis-server
+```
+
+A partir disso, a aplicação já está rodando. Para acessar o projeto, você deve acessar a página de registro e criar uma conta.
+
 ## Tarefas - Passo a passo
 
 ### Tarefa 1 - Construção de Interface em React
